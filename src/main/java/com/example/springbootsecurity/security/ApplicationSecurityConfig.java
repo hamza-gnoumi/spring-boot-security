@@ -15,6 +15,10 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+import java.util.concurrent.TimeUnit;
 
 import static com.example.springbootsecurity.security.ApplicationUserRole.*;
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -48,7 +52,24 @@ public class ApplicationSecurityConfig   {
                         .anyRequest()
                         .authenticated()
                 )
-                .httpBasic(withDefaults());
+                .formLogin()
+                .loginPage("/login")
+                .defaultSuccessUrl("/courses",true)
+                .usernameParameter("username")
+                .passwordParameter("password")
+                .and()
+                .rememberMe()//defaults to 2 weeks
+                .tokenValiditySeconds((int) TimeUnit.DAYS.toSeconds(21))
+                .key("somethingverysecured")
+                .rememberMeParameter("remember-me")
+                .and()
+                .logout()
+                .logoutUrl("/logout")
+                .logoutRequestMatcher(new AntPathRequestMatcher("/logout","GET"))//if csrf disable
+                .clearAuthentication(true)
+                .invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID","remember-me")
+                .logoutSuccessUrl("/login");
         return http.build();
     }
   /* @Bean
